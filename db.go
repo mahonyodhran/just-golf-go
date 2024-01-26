@@ -15,6 +15,7 @@ var db *sql.DB
 var logger *log.Logger
 
 type Scorecard struct {
+	ID    int
 	Holes [18]int
 }
 
@@ -56,6 +57,26 @@ func InitDB() {
 		log.Fatal("Error opening log file:", err)
 	}
 	logger = log.New(logFile, "APP: ", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+func getScorecards() ([]Scorecard, error) {
+	data := []Scorecard{}
+	rows, err := db.Query(`SELECT id, hole_1, hole_2, hole_3, hole_4, hole_5, hole_6, hole_7, hole_8, hole_9, hole_10, hole_11, hole_12, hole_13, hole_14, hole_15, hole_16, hole_17, hole_18 from SCORECARD`)
+	if err != nil {
+		log.Fatal("Error running query:", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var scorecard Scorecard
+		err := rows.Scan(&scorecard.ID, &scorecard.Holes[0], &scorecard.Holes[1], &scorecard.Holes[2], &scorecard.Holes[3], &scorecard.Holes[4], &scorecard.Holes[5], &scorecard.Holes[6], &scorecard.Holes[7], &scorecard.Holes[8], &scorecard.Holes[9], &scorecard.Holes[10], &scorecard.Holes[11], &scorecard.Holes[12], &scorecard.Holes[13], &scorecard.Holes[14], &scorecard.Holes[15], &scorecard.Holes[16], &scorecard.Holes[17])
+		if err != nil {
+			log.Fatal(err)
+		}
+		data = append(data, scorecard)
+	}
+
+	return data, nil
 }
 
 func insertScore(scorecard Scorecard) error {
