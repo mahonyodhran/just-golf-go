@@ -12,7 +12,27 @@
     <h1>Enter Score</h1>
 
     <form method="post">
-        <!-- Second Row (Holes 1-9) -->
+        <!-- Text Input for Golfer - TODO: to be updated (use currently logged in golfer)-->
+        <div class="row mt-3">
+            <div class="col-auto">
+                <label for="golferID">Golfer ID:</label>
+                <input type="text" id="golferID" name="golferID" class="form-control" required>
+            </div>
+        </div>
+
+        <!-- Course Dropdown -->
+        <div class="row mt-3">
+            <div class="col-auto">
+                <label for="courseID">Select Course:</label>
+                <select id="courseID" name="courseID" class="form-control" required>
+                    {{ range .Courses }}
+                        <option value="{{ .ID }}">{{ .Name }}</option>
+                    {{ end }}
+                </select>
+            </div>
+        </div>
+        
+        <!-- First Row (Holes 1-9) -->
         <div class="row">
             <div class="col-auto">
                 <label for="hole1">Hole 1:</label>
