@@ -3,10 +3,16 @@ package main
 import (
 	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 )
+
+type AddScoreTemplateData struct {
+	GolferID int
+	Courses  []Course
+}
 
 func inc(i int) int {
 	return i + 1
@@ -26,14 +32,14 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 	scorecards, err := getScorecards()
 	if err != nil {
-		fmt.Println(err) // TODO
+		log.Fatal("Error getting scorecards: ", err)
 	}
 
 	// TODO - Clean up this, very awkwarad for some reason
 	// Read the template file
 	templateFile, err := os.ReadFile("templates/scorecards.html")
 	if err != nil {
-		fmt.Println("Error reading template file:", err)
+		log.Fatal("Error reading template file: ", err)
 		return
 	}
 
@@ -44,7 +50,7 @@ func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 	tmpl := template.New("scorecards").Funcs(template.FuncMap{"inc": inc})
 	tmpl, err = tmpl.Parse(templateContent)
 	if err != nil {
-		fmt.Println("Error parsing template:", err)
+		log.Fatal("Error parsing template: ", err)
 		return
 	}
 
@@ -52,7 +58,7 @@ func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 
 	err = tmpl.Execute(w, scorecards)
 	if err != nil {
-		fmt.Println(err) // TODO: Handle the error appropriately
+		log.Fatal("Error executing template: ", err)
 	}
 }
 
@@ -62,8 +68,20 @@ func ScorecardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var golferID = 123
+
+	courses, err := getCourses()
+	if err != nil {
+		log.Fatal("Error getting courses: ", err)
+	}
+
+	data := AddScoreTemplateData{
+		GolferID: golferID,
+		Courses:  courses,
+	}
+
 	tmpl := template.Must(template.ParseFiles("templates/scorecard.html"))
-	tmpl.Execute(w, nil)
+	tmpl.Execute(w, data)
 }
 
 func HandleScorecardPost(w http.ResponseWriter, r *http.Request) {
@@ -72,7 +90,22 @@ func HandleScorecardPost(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error parsing form data", http.StatusInternalServerError)
 		return
 	}
+	// TODO - Break this up into helper validation methods
 	var scorecard Scorecard
+	var golferIDStr = r.Form.Get("golferID")
+	scorecard.GolferID, err = strconv.Atoi(golferIDStr)
+	if err != nil {
+		http.Error(w, "Invalid golfer ID", http.StatusBadRequest)
+		return
+	}
+
+	courseIDStr := r.Form.Get("courseID")
+	scorecard.CourseID, err = strconv.Atoi(courseIDStr)
+	if err != nil {
+		http.Error(w, "Invalid course ID", http.StatusBadRequest)
+		return
+	}
+
 	for i := 1; i <= 18; i++ {
 		inputName := "hole" + fmt.Sprint(i)
 		scoreStr := r.Form.Get(inputName)
