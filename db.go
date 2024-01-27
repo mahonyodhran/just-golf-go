@@ -192,7 +192,7 @@ func insertCourse(courseName string) error {
 	if err != nil {
 		logger.Println("Error inserting course:", err)
 	} else {
-		logger.Printf("Inserted record to Course (ID: %s)", courseName)
+		logger.Printf("Inserted record to Course (Name: %s)", courseName)
 	}
 
 	return err
