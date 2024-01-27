@@ -185,6 +185,19 @@ func getCourses() ([]Course, error) {
 	return data, nil
 }
 
+func insertCourse(courseName string) error {
+	_, err := db.Exec(`
+		INSERT INTO course (name)
+		VALUES ($1)`, courseName)
+	if err != nil {
+		logger.Println("Error inserting course:", err)
+	} else {
+		logger.Printf("Inserted record to Course (ID: %s)", courseName)
+	}
+
+	return err
+}
+
 // func dropTables() error {
 // 	//Obviously use with caution - take an extract beforehand
 // 	_, err := db.Exec(`DROP TABLE if exists course, golfer, scorecard,`)
