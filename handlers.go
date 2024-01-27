@@ -22,6 +22,7 @@ func InitializeApp() {
 	http.HandleFunc("/", IndexHandler)
 	http.HandleFunc("/scorecard", ScorecardHandler)
 	http.HandleFunc("/scorecards", ScorecardsHandler)
+	http.HandleFunc("/course", CourseHandler)
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +38,7 @@ func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 
 	// TODO - Clean up this, very awkwarad for some reason
 	// Read the template file
-	templateFile, err := os.ReadFile("templates/scorecards.html")
+	templateFile, err := os.ReadFile("templates/scorecard/scorecards.html")
 	if err != nil {
 		log.Fatal("Error reading template file: ", err)
 		return
@@ -53,8 +54,6 @@ func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 		log.Fatal("Error parsing template: ", err)
 		return
 	}
-
-	fmt.Println("Parsed Template:", tmpl.DefinedTemplates())
 
 	err = tmpl.Execute(w, scorecards)
 	if err != nil {
@@ -80,7 +79,7 @@ func ScorecardHandler(w http.ResponseWriter, r *http.Request) {
 		Courses:  courses,
 	}
 
-	tmpl := template.Must(template.ParseFiles("templates/scorecard.html"))
+	tmpl := template.Must(template.ParseFiles("templates/scorecard/add-scorecard.html"))
 	tmpl.Execute(w, data)
 }
 
@@ -118,6 +117,33 @@ func HandleScorecardPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	insertScore(scorecard)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func CourseHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		HandleCoursePost(w, r)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/course/add-course.html"))
+	tmpl.Execute(w, nil)
+}
+
+func HandleCoursePost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error parsing form data", http.StatusInternalServerError)
+		return
+	}
+	var courseName = r.Form.Get("courseName")
+	if err != nil {
+		http.Error(w, "Invalid Course Name", http.StatusBadRequest)
+		return
+	}
+
+	insertCourse(courseName)
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
