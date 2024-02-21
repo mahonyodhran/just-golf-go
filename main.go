@@ -10,5 +10,5 @@ func main() {
 	defer db.Close()
 	InitializeApp()
 	log.Println("App starting...")
-	log.Fatal(http.ListenAndServe(":8008", nil))
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
