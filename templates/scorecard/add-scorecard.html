@@ -12,11 +12,15 @@
     <h1>Enter Score</h1>
 
     <form method="post">
-        <!-- Text Input for Golfer - TODO: to be updated (use currently logged in golfer)-->
+        <!-- Golfer Dropdown -->
         <div class="row mt-3">
             <div class="col-auto">
-                <label for="golferID">Golfer ID:</label>
-                <input type="text" id="golferID" name="golferID" class="form-control" required>
+                <label for="golferID">Select Golfer:</label>
+                <select id="golferID" name="golferID" class="form-control" required>
+                    {{ range .Golfers }}
+                        <option value="{{ .ID }}">{{ .First_Name }} {{ .Last_Name }}</option>
+                    {{ end }}
+                </select>
             </div>
         </div>
 

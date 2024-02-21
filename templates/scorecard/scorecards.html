@@ -10,7 +10,9 @@
 
     {{range .}}
     <div>
-        <p>ID: {{.ID}}</p>
+        <p>Scorecard ID: {{.ID}}</p>
+        <p>Course ID: {{.CourseID}}</p>
+        <p>Golfer ID: {{.GolferID}}</p>
         <ul>
             {{range $index, $value := .Holes}}
             <li>Hole {{inc $index}}: {{$value}}</li>

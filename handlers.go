@@ -10,8 +10,8 @@ import (
 )
 
 type AddScoreTemplateData struct {
-	GolferID int
-	Courses  []Course
+	Golfers []Golfer
+	Courses []Course
 }
 
 func inc(i int) int {
@@ -23,6 +23,7 @@ func InitializeApp() {
 	http.HandleFunc("/scorecard", ScorecardHandler)
 	http.HandleFunc("/scorecards", ScorecardsHandler)
 	http.HandleFunc("/course", CourseHandler)
+	http.HandleFunc("/golfer", GolferHandler)
 }
 
 func IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,6 @@ func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("Error getting scorecards: ", err)
 	}
-
 	// TODO - Clean up this, very awkwarad for some reason
 	// Read the template file
 	templateFile, err := os.ReadFile("templates/scorecard/scorecards.html")
@@ -47,7 +47,7 @@ func ScorecardsHandler(w http.ResponseWriter, r *http.Request) {
 	// Convert the file content to a string
 	templateContent := string(templateFile)
 
-	// Parse the HTML template
+	// Parse the HTML templates
 	tmpl := template.New("scorecards").Funcs(template.FuncMap{"inc": inc})
 	tmpl, err = tmpl.Parse(templateContent)
 	if err != nil {
@@ -67,7 +67,10 @@ func ScorecardHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var golferID = 123
+	golfers, err := getGolfers()
+	if err != nil {
+		log.Fatal("Error getting golfers: ", err)
+	}
 
 	courses, err := getCourses()
 	if err != nil {
@@ -75,8 +78,8 @@ func ScorecardHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := AddScoreTemplateData{
-		GolferID: golferID,
-		Courses:  courses,
+		Golfers: golfers,
+		Courses: courses,
 	}
 
 	tmpl := template.Must(template.ParseFiles("templates/scorecard/add-scorecard.html"))
@@ -144,6 +147,44 @@ func HandleCoursePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	insertCourse(courseName)
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+func GolferHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost {
+		HandleGolferPost(w, r)
+		return
+	}
+
+	tmpl := template.Must(template.ParseFiles("templates/golfer/add-golfer.html"))
+	tmpl.Execute(w, nil)
+}
+
+func HandleGolferPost(w http.ResponseWriter, r *http.Request) {
+	err := r.ParseForm()
+	if err != nil {
+		http.Error(w, "Error parsing form data", http.StatusInternalServerError)
+		return
+	}
+	var first_name = r.Form.Get("firstName")
+	if err != nil {
+		http.Error(w, "Invalid First Name", http.StatusBadRequest)
+		return
+	}
+	var last_name = r.Form.Get("lastName")
+	if err != nil {
+		http.Error(w, "Invalid Last Name", http.StatusBadRequest)
+		return
+	}
+	var index_str = r.Form.Get("index")
+	index, err := strconv.Atoi(index_str)
+	if err != nil {
+		http.Error(w, "Invalid Index", http.StatusBadRequest)
+		return
+	}
+
+	insertGolfer(first_name, last_name, index)
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

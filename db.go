@@ -17,7 +17,7 @@ var (
 )
 
 const (
-	dbConnEnv = "DB_CONN"
+	dbConnEnv = "DB_CONN_GO"
 	driver    = "postgres"
 )
 
@@ -28,7 +28,7 @@ const (
 )
 
 const (
-	queryGetScorecards        = `SELECT id, hole_1, hole_2, hole_3, hole_4, hole_5, hole_6, hole_7, hole_8, hole_9, hole_10, hole_11, hole_12, hole_13, hole_14, hole_15, hole_16, hole_17, hole_18 FROM ` + scorecardTable
+	queryGetScorecards        = `SELECT id, golfer_id, course_id, hole_1, hole_2, hole_3, hole_4, hole_5, hole_6, hole_7, hole_8, hole_9, hole_10, hole_11, hole_12, hole_13, hole_14, hole_15, hole_16, hole_17, hole_18 FROM ` + scorecardTable
 	queryInsertScore          = `INSERT INTO ` + scorecardTable + ` (date_inserted, golfer_id, course_id, hole_1, hole_2, hole_3, hole_4, hole_5, hole_6, hole_7, hole_8, hole_9, hole_10, hole_11, hole_12, hole_13, hole_14, hole_15, hole_16, hole_17, hole_18) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)`
 	queryCreateScorecardTable = `CREATE TABLE IF NOT EXISTS ` + scorecardTable + ` (id SERIAL PRIMARY KEY, date_inserted TIMESTAMP DEFAULT CURRENT_TIMESTAMP, golfer_id INT REFERENCES ` + golferTable + `(id), course_id INT REFERENCES ` + courseTable + `(id), hole_1 INT, hole_2 INT, hole_3 INT, hole_4 INT, hole_5 INT, hole_6 INT, hole_7 INT, hole_8 INT, hole_9 INT, hole_10 INT, hole_11 INT, hole_12 INT, hole_13 INT, hole_14 INT, hole_15 INT, hole_16 INT, hole_17 INT, hole_18 INT)`
 
@@ -36,6 +36,8 @@ const (
 	queryInsertCourse      = `INSERT INTO ` + courseTable + ` (name) VALUES ($1)`
 	queryCreateCourseTable = `CREATE TABLE IF NOT EXISTS ` + courseTable + ` (id SERIAL PRIMARY KEY, date_inserted TIMESTAMP DEFAULT CURRENT_TIMESTAMP, name TEXT)`
 
+	queryGetGolfers        = `SELECT ID, FIRST_NAME, LAST_NAME, INDEX FROM ` + golferTable
+	queryInsertGolfer      = `INSERT INTO ` + golferTable + ` (first_name, last_name, index) VALUES ($1, $2, $3)`
 	queryCreateGolferTable = `CREATE TABLE IF NOT EXISTS ` + golferTable + ` (id SERIAL PRIMARY KEY, date_inserted TIMESTAMP DEFAULT CURRENT_TIMESTAMP, first_name TEXT, last_name TEXT, index int)`
 )
 
@@ -49,6 +51,13 @@ type Scorecard struct {
 type Course struct {
 	ID   int
 	Name string
+}
+
+type Golfer struct {
+	ID         int
+	First_Name string
+	Last_Name  string
+	Index      int
 }
 
 func InitDB() {
@@ -106,7 +115,7 @@ func getScorecards() ([]Scorecard, error) {
 
 	for rows.Next() {
 		var scorecard Scorecard
-		err := rows.Scan(&scorecard.ID, &scorecard.Holes[0], &scorecard.Holes[1], &scorecard.Holes[2], &scorecard.Holes[3], &scorecard.Holes[4], &scorecard.Holes[5], &scorecard.Holes[6], &scorecard.Holes[7], &scorecard.Holes[8], &scorecard.Holes[9], &scorecard.Holes[10], &scorecard.Holes[11], &scorecard.Holes[12], &scorecard.Holes[13], &scorecard.Holes[14], &scorecard.Holes[15], &scorecard.Holes[16], &scorecard.Holes[17])
+		err := rows.Scan(&scorecard.ID, &scorecard.GolferID, &scorecard.CourseID, &scorecard.Holes[0], &scorecard.Holes[1], &scorecard.Holes[2], &scorecard.Holes[3], &scorecard.Holes[4], &scorecard.Holes[5], &scorecard.Holes[6], &scorecard.Holes[7], &scorecard.Holes[8], &scorecard.Holes[9], &scorecard.Holes[10], &scorecard.Holes[11], &scorecard.Holes[12], &scorecard.Holes[13], &scorecard.Holes[14], &scorecard.Holes[15], &scorecard.Holes[16], &scorecard.Holes[17])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -177,6 +186,35 @@ func insertCourse(courseName string) error {
 		logger.Println("Error inserting course:", err)
 	} else {
 		logger.Printf("Inserted record to Course (Name: %s)", courseName)
+	}
+	return err
+}
+
+func getGolfers() ([]Golfer, error) {
+	data := []Golfer{}
+	rows, err := db.Query(queryGetGolfers)
+	if err != nil {
+		log.Fatal("Error running query:", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var golfer Golfer
+		err := rows.Scan(&golfer.ID, &golfer.First_Name, &golfer.Last_Name, &golfer.Index)
+		if err != nil {
+			log.Fatal(err)
+		}
+		data = append(data, golfer)
+	}
+	return data, nil
+}
+
+func insertGolfer(firstName string, lastName string, index int) error {
+	_, err := db.Exec(queryInsertGolfer, firstName, lastName, index)
+	if err != nil {
+		logger.Println("Error inserting golfer:", err)
+	} else {
+		logger.Printf("Inserted record to Golfer (Name: %s %s)", firstName, lastName)
 	}
 	return err
 }
